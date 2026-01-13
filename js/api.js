@@ -45,11 +45,16 @@ async function getParticipants() {
   return data || [];
 }
 
-// 참여자 일괄 등록
+// 참여자 일괄 등록 (중복 제거)
 async function upsertParticipants(participants) {
+  // 엑셀 내 중복 사번 제거 (마지막 값 유지)
+  const uniqueMap = new Map();
+  participants.forEach(p => uniqueMap.set(p.employee_id, p));
+  const uniqueParticipants = Array.from(uniqueMap.values());
+
   const { data, error } = await supabaseClient
     .from('participants')
-    .upsert(participants, { onConflict: 'employee_id' });
+    .upsert(uniqueParticipants, { onConflict: 'employee_id' });
 
   if (error) throw error;
   return data;
@@ -78,11 +83,16 @@ async function getPresenters() {
   return data || [];
 }
 
-// 발표자 일괄 등록
+// 발표자 일괄 등록 (중복 제거)
 async function upsertPresenters(presenters) {
+  // 엑셀 내 중복 팀명 제거 (마지막 값 유지)
+  const uniqueMap = new Map();
+  presenters.forEach(p => uniqueMap.set(p.team_name, p));
+  const uniquePresenters = Array.from(uniqueMap.values());
+
   const { data, error } = await supabaseClient
     .from('presenters')
-    .upsert(presenters, { onConflict: 'team_name' });
+    .upsert(uniquePresenters, { onConflict: 'team_name' });
 
   if (error) throw error;
   return data;
