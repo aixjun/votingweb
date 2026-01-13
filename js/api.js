@@ -4,7 +4,7 @@
 
 // 참여자 로그인
 async function loginParticipant(employeeId, password) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('participants')
     .select('*')
     .eq('employee_id', employeeId)
@@ -20,7 +20,7 @@ async function loginParticipant(employeeId, password) {
 
 // 관리자 로그인
 async function loginAdmin(employeeId, password) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('admins')
     .select('*')
     .eq('employee_id', employeeId)
@@ -36,7 +36,7 @@ async function loginAdmin(employeeId, password) {
 
 // 참여자 목록 조회
 async function getParticipants() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('participants')
     .select('*')
     .order('name');
@@ -47,7 +47,7 @@ async function getParticipants() {
 
 // 참여자 일괄 등록
 async function upsertParticipants(participants) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('participants')
     .upsert(participants, { onConflict: 'employee_id' });
 
@@ -57,7 +57,7 @@ async function upsertParticipants(participants) {
 
 // 참여자 전체 삭제
 async function deleteAllParticipants() {
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('participants')
     .delete()
     .neq('id', 0); // 전체 삭제
@@ -69,7 +69,7 @@ async function deleteAllParticipants() {
 
 // 발표자 목록 조회
 async function getPresenters() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('presenters')
     .select('*')
     .order('display_order');
@@ -80,7 +80,7 @@ async function getPresenters() {
 
 // 발표자 일괄 등록
 async function upsertPresenters(presenters) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('presenters')
     .upsert(presenters, { onConflict: 'team_name' });
 
@@ -90,7 +90,7 @@ async function upsertPresenters(presenters) {
 
 // 발표자 전체 삭제
 async function deleteAllPresenters() {
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('presenters')
     .delete()
     .neq('id', 0);
@@ -103,7 +103,7 @@ async function deleteAllPresenters() {
 // 투표하기
 async function submitVotes(participantId, presenterIds) {
   // 기존 투표 삭제
-  await supabase
+  await supabaseClient
     .from('votes')
     .delete()
     .eq('participant_id', participantId);
@@ -114,7 +114,7 @@ async function submitVotes(participantId, presenterIds) {
     presenter_id: presenterId
   }));
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('votes')
     .insert(votes);
 
@@ -124,7 +124,7 @@ async function submitVotes(participantId, presenterIds) {
 
 // 내 투표 조회
 async function getMyVotes(participantId) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('votes')
     .select('presenter_id')
     .eq('participant_id', participantId);
@@ -135,7 +135,7 @@ async function getMyVotes(participantId) {
 
 // 투표 여부 확인
 async function hasVoted(participantId) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('votes')
     .select('id')
     .eq('participant_id', participantId)
@@ -147,7 +147,7 @@ async function hasVoted(participantId) {
 
 // 투표 집계 조회
 async function getVoteResults() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('votes')
     .select(`
       presenter_id,
@@ -179,7 +179,7 @@ async function getVoteResults() {
 
 // 투표 전체 삭제
 async function deleteAllVotes() {
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('votes')
     .delete()
     .neq('id', 0);
@@ -189,7 +189,7 @@ async function deleteAllVotes() {
 
 // 투표 참여자 수
 async function getVoteParticipantCount() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('votes')
     .select('participant_id');
 
@@ -203,7 +203,7 @@ async function getVoteParticipantCount() {
 
 // 설정 조회
 async function getSettings() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('settings')
     .select('*')
     .single();
@@ -214,7 +214,7 @@ async function getSettings() {
 
 // 설정 업데이트
 async function updateSettings(settings) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('settings')
     .upsert({ id: 1, ...settings });
 

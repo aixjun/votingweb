@@ -1,10 +1,10 @@
 // Supabase 설정
-// 아래 값들을 실제 Supabase 프로젝트 정보로 교체하세요
 const SUPABASE_URL = 'https://mrzujtreksaeljyixrbk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yenVqdHJla3NhZWxqeWl4cmJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNTM5NzEsImV4cCI6MjA4MzgyOTk3MX0.UJxpO8w3N6ALgH43PgNRUyaMcISWZbEwJCEN_ed4npY';
 
 // Supabase 클라이언트 초기화
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // 세션 관리
 const Session = {
