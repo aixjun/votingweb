@@ -14,7 +14,11 @@
       "Bash(git rm:*)",
       "Bash(git commit:*)",
       "WebFetch(domain:aixjun.github.io)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(python3:*)",
+      "Bash(pip install:*)",
+      "Bash(node -e:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

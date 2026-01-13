@@ -28,7 +28,7 @@
             <div class="file-upload" onclick="document.getElementById('participantFile').click()">
               <input type="file" id="participantFile" accept=".xlsx,.xls" onchange="handleParticipantUpload(event)">
               <p>📤 클릭하여 업로드</p>
-              <p style="font-size: 0.8rem; margin-top: 5px;">사번, 이름, 부서, 비밀번호</p>
+              <p style="font-size: 0.8rem; margin-top: 5px;">사번, 이름, 부서 (비밀번호 선택)</p>
             </div>
           </div>
 
@@ -38,7 +38,7 @@
             <div class="file-upload" onclick="document.getElementById('presenterFile').click()">
               <input type="file" id="presenterFile" accept=".xlsx,.xls" onchange="handlePresenterUpload(event)">
               <p>📤 클릭하여 업로드</p>
-              <p style="font-size: 0.8rem; margin-top: 5px;">팀명, 발표자, 주제, 순서</p>
+              <p style="font-size: 0.8rem; margin-top: 5px;">부서, 발표내용</p>
             </div>
           </div>
         </div>
@@ -256,20 +256,23 @@
 
       try {
         const data = await readExcelFile(file);
-        const participants = data.map(row => ({
-          employee_id: String(row['사번'] || row['employee_id'] || ''),
-          name: row['이름'] || row['name'] || '',
-          department: row['부서'] || row['department'] || '',
-          password: String(row['비밀번호'] || row['password'] || '')
-        })).filter(p => p.employee_id && p.name);
+        const participants = data.map(row => {
+          const empId = String(row['사번'] || row['employee_id'] || '');
+          return {
+            employee_id: empId,
+            name: row['이름'] || row['name'] || '',
+            department: row['부서'] || row['department'] || '',
+            password: String(row['비밀번호'] || row['password'] || empId) // 비밀번호 없으면 사번 사용
+          };
+        }).filter(p => p.employee_id && p.name);
 
         if (participants.length === 0) {
-          alert('유효한 데이터가 없습니다. 엑셀 형식을 확인하세요.\n필수: 사번, 이름, 비밀번호');
+          alert('유효한 데이터가 없습니다. 엑셀 형식을 확인하세요.\n필수: 사번, 이름');
           return;
         }
 
         await upsertParticipants(participants);
-        alert(`${participants.length}명의 참여자가 등록되었습니다.`);
+        alert(`${participants.length}명의 참여자가 등록되었습니다.\n(비밀번호 미입력 시 사번이 비밀번호로 설정됩니다)`);
         await loadParticipants();
       } catch (error) {
         alert('업로드 실패: ' + error.message);
@@ -286,14 +289,14 @@
       try {
         const data = await readExcelFile(file);
         const presenters = data.map((row, index) => ({
-          team_name: row['팀명'] || row['team_name'] || '',
-          presenter_name: row['발표자'] || row['presenter_name'] || '',
-          topic: row['주제'] || row['topic'] || '',
+          team_name: row['부서'] || row['팀명'] || row['team_name'] || '',
+          presenter_name: row['발표자'] || row['부서'] || row['presenter_name'] || '',
+          topic: row['발표내용'] || row['주제'] || row['topic'] || '',
           display_order: row['순서'] || row['order'] || index + 1
-        })).filter(p => p.team_name && p.presenter_name);
+        })).filter(p => p.team_name);
 
         if (presenters.length === 0) {
-          alert('유효한 데이터가 없습니다. 엑셀 형식을 확인하세요.\n필수: 팀명, 발표자');
+          alert('유효한 데이터가 없습니다. 엑셀 형식을 확인하세요.\n필수: 부서 또는 팀명');
           return;
         }
 
