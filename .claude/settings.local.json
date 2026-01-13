@@ -4,7 +4,17 @@
       "WebFetch(domain:kwaiday-50ba6.web.app)",
       "WebFetch(domain:github.com)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git branch:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: 투표 시스템\n\n- 로그인/투표/관리자 페이지 구현\n- Supabase 연동\n- GitHub Actions 배포 설정\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git config:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:aixjun.github.io)",
+      "Bash(git pull:*)"
     ]
   }
 }
