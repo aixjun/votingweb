@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>투표 시스템 - 투표하기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>🗳️ 투표하기</h1>
+      <p id="welcomeMsg">환영합니다!</p>
+    </header>
+
+    <main>
+      <!-- 선택 카운터 -->
+      <div class="selection-counter">
+        <p>선택된 팀: <span class="count" id="selectedCount">0</span> / <span id="maxVotes">5</span></p>
+      </div>
+
+      <!-- 투표 완료 메시지 -->
+      <div id="votedMessage" class="alert alert-success" style="display: none;">
+        이미 투표를 완료하셨습니다. 다시 투표하시면 기존 투표가 변경됩니다.
+      </div>
+
+      <!-- 발표자 목록 -->
+      <div class="card">
+        <h2 style="margin-bottom: 20px;">발표자 선택</h2>
+        <div class="vote-grid" id="presenterGrid">
+          <div class="loading show">
+            <div class="spinner"></div>
+            <p>발표자 목록 로딩 중...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 버튼 -->
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="logout()">로그아웃</button>
+        <button class="btn btn-primary" id="submitBtn" disabled>투표하기</button>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>v1.0 | 투표 시스템</p>
+    </footer>
+  </div>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    let selectedPresenters = [];
+    let maxVotes = 5;
+    let presenters = [];
+    let currentUser = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 로그인 체크
+      currentUser = getCurrentUser();
+      if (!currentUser || currentUser.isAdmin) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      document.getElementById('welcomeMsg').textContent =
+        `${currentUser.name}님 환영합니다!`;
+
+      await loadSettings();
+      await loadPresenters();
+      await checkPreviousVotes();
+    });
+
+    async function loadSettings() {
+      try {
+        const settings = await getSettings();
+        maxVotes = settings.max_votes || 5;
+        document.getElementById('maxVotes').textContent = maxVotes;
+
+        if (!settings.voting_open) {
+          document.getElementById('submitBtn').disabled = true;
+          document.getElementById('submitBtn').textContent = '투표가 종료되었습니다';
+        }
+      } catch (error) {
+        console.error('설정 로드 실패:', error);
+      }
+    }
+
+    async function loadPresenters() {
+      const grid = document.getElementById('presenterGrid');
+
+      try {
+        presenters = await getPresenters();
+
+        if (presenters.length === 0) {
+          grid.innerHTML = '<p style="text-align: center; color: #aaa;">등록된 발표자가 없습니다.</p>';
+          return;
+        }
+
+        grid.innerHTML = presenters.map(p => `
+          <div class="vote-card" data-id="${p.id}" onclick="toggleSelection(${p.id})">
+            <h3>${p.team_name}</h3>
+            <p>${p.presenter_name}</p>
+            <p style="margin-top: 8px; font-size: 0.8rem;">${p.topic || ''}</p>
+          </div>
+        `).join('');
+
+      } catch (error) {
+        grid.innerHTML = '<p style="color: #ff4757;">발표자 목록을 불러올 수 없습니다.</p>';
+        console.error('발표자 로드 실패:', error);
+      }
+    }
+
+    async function checkPreviousVotes() {
+      try {
+        const myVotes = await getMyVotes(currentUser.id);
+        if (myVotes.length > 0) {
+          document.getElementById('votedMessage').style.display = 'block';
+          selectedPresenters = myVotes;
+          updateSelectionUI();
+        }
+      } catch (error) {
+        console.error('이전 투표 확인 실패:', error);
+      }
+    }
+
+    function toggleSelection(presenterId) {
+      const index = selectedPresenters.indexOf(presenterId);
+
+      if (index > -1) {
+        // 이미 선택됨 -> 해제
+        selectedPresenters.splice(index, 1);
+      } else {
+        // 새로 선택
+        if (selectedPresenters.length >= maxVotes) {
+          alert(`최대 ${maxVotes}개 팀만 선택할 수 있습니다.`);
+          return;
+        }
+        selectedPresenters.push(presenterId);
+      }
+
+      updateSelectionUI();
+    }
+
+    function updateSelectionUI() {
+      // 카운터 업데이트
+      document.getElementById('selectedCount').textContent = selectedPresenters.length;
+
+      // 카드 선택 상태 업데이트
+      document.querySelectorAll('.vote-card').forEach(card => {
+        const id = parseInt(card.dataset.id);
+        card.classList.toggle('selected', selectedPresenters.includes(id));
+      });
+
+      // 버튼 상태 업데이트
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = selectedPresenters.length !== maxVotes;
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      if (selectedPresenters.length !== maxVotes) {
+        alert(`${maxVotes}개 팀을 선택해주세요.`);
+        return;
+      }
+
+      if (!confirm('투표를 제출하시겠습니까?')) {
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '제출 중...';
+
+      try {
+        await submitVotes(currentUser.id, selectedPresenters);
+        alert('투표가 완료되었습니다!');
+        document.getElementById('votedMessage').style.display = 'block';
+      } catch (error) {
+        alert('투표 제출에 실패했습니다: ' + error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '투표하기';
+      }
+    });
+  </script>
+</body>
+</html>
